@@ -1,0 +1,87 @@
+{
+  "name": "docgrity",
+  "displayName": "Docgrity — Doc Integrity for Repos",
+  "description": "Finds contradictions, duplicates and open questions across your repository's markdown docs, and raises GitHub issues to get them fixed. Uses your own Copilot subscription — no keys, no servers.",
+  "version": "0.1.0",
+  "publisher": "ujjavala",
+  "repository": { "type": "git", "url": "https://github.com/ujjavala/docgrity-vscode" },
+  "engines": { "vscode": "^1.95.0" },
+  "categories": ["AI", "Linters", "Other"],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      { "command": "docgrity.scan", "title": "Docgrity: Scan repository docs" },
+      { "command": "docgrity.raiseIssue", "title": "Docgrity: Raise GitHub issue for finding" },
+      { "command": "docgrity.clearFindings", "title": "Docgrity: Clear findings" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "docgrity", "title": "Docgrity", "icon": "media/icon.svg" }
+      ]
+    },
+    "views": {
+      "docgrity": [
+        { "id": "docgrity.findings", "name": "Findings" }
+      ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "docgrity.raiseIssue",
+          "when": "view == docgrity.findings && viewItem == finding"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Docgrity",
+      "properties": {
+        "docgrity.include": {
+          "type": "string",
+          "default": "**/*.md",
+          "description": "Glob for documents to scan (markdown only by design)."
+        },
+        "docgrity.exclude": {
+          "type": "string",
+          "default": "**/{node_modules,dist,out,build,.git,vendor}/**",
+          "description": "Glob for paths to exclude from scans."
+        },
+        "docgrity.maxFiles": {
+          "type": "number",
+          "default": 200,
+          "description": "Maximum number of markdown files per scan."
+        },
+        "docgrity.maxPairs": {
+          "type": "number",
+          "default": 25,
+          "description": "Maximum candidate document pairs assessed per scan."
+        },
+        "docgrity.thresholds.duplicate": {
+          "type": "number",
+          "default": 0.75,
+          "description": "Minimum confidence to record a duplicate finding."
+        },
+        "docgrity.thresholds.contradiction": {
+          "type": "number",
+          "default": 0.7,
+          "description": "Minimum confidence to record a contradiction finding."
+        },
+        "docgrity.thresholds.openQuestion": {
+          "type": "number",
+          "default": 0.6,
+          "description": "Minimum confidence to record an open-question finding."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.95.0",
+    "typescript": "^5.6.0"
+  }
+}
