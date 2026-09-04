@@ -34,12 +34,23 @@ function validateEvidence(list: unknown): Evidence[] {
 }
 
 async function pickModel(): Promise<vscode.LanguageModelChat> {
-  // Models rotate; select at call time, prefer a strong family, fall back to any.
-  const preferred = await vscode.lm.selectChatModels({ vendor: 'copilot', family: 'gpt-4o' });
-  if (preferred.length > 0) return preferred[0];
-  const any = await vscode.lm.selectChatModels({ vendor: 'copilot' });
+  // Models rotate; select at call time. Vendor/family are configurable so any
+  // vscode.lm provider works — Copilot, or local models (e.g. Ollama/llama via
+  // Copilot's "Manage models" BYOK, or a local-provider extension's vendor).
+  const cfg = vscode.workspace.getConfiguration('docgrity');
+  const vendor = cfg.get<string>('model.vendor', 'copilot');
+  const family = cfg.get<string>('model.family', '');
+
+  if (family) {
+    const preferred = await vscode.lm.selectChatModels({ vendor, family });
+    if (preferred.length > 0) return preferred[0];
+  }
+  const any = await vscode.lm.selectChatModels(vendor ? { vendor } : {});
   if (any.length === 0) {
-    throw new Error('No Copilot language model available. Sign in to GitHub Copilot.');
+    throw new Error(
+      `No language model available for vendor "${vendor || 'any'}". Sign in to GitHub Copilot, ` +
+        'or set docgrity.model.vendor/family to a locally provided model (e.g. Ollama).'
+    );
   }
   return any[0];
 }

@@ -56,6 +56,16 @@
           "default": 25,
           "description": "Maximum candidate document pairs assessed per scan."
         },
+        "docgrity.model.vendor": {
+          "type": "string",
+          "default": "copilot",
+          "description": "Language model vendor to use via vscode.lm. 'copilot' covers Copilot models and Ollama models added through Copilot Chat's 'Manage models'. Set to another provider's vendor id, or empty for any available model."
+        },
+        "docgrity.model.family": {
+          "type": "string",
+          "default": "",
+          "description": "Preferred model family (e.g. 'gpt-4o', 'llama3.1'). Empty = first available model from the vendor."
+        },
         "docgrity.thresholds.duplicate": {
           "type": "number",
           "default": 0.75,
