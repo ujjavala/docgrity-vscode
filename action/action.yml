@@ -1,0 +1,30 @@
+name: 'Docgrity doc-integrity scan'
+description: >-
+  Finds contradictions, duplicates and open questions across repository markdown
+  docs. Writes a job summary and a static HTML report; optionally raises
+  deduplicated GitHub issues.
+branding:
+  icon: 'file-text'
+  color: 'blue'
+inputs:
+  provider:
+    description: 'LLM provider: github-models (default, uses GITHUB_TOKEN), gemini, openai, anthropic'
+    default: 'github-models'
+  api_key:
+    description: 'API key for gemini/openai/anthropic (pass a repo secret). Not needed for github-models.'
+    default: ''
+  create_issues:
+    description: 'Create/update deduplicated GitHub issues for findings (opt-in)'
+    default: 'false'
+  max_new_issues:
+    description: 'Cap on new issues created per run'
+    default: '5'
+  include:
+    description: 'Markdown glob'
+    default: '**/*.md'
+  out_dir:
+    description: 'Report output directory'
+    default: 'docgrity-report'
+runs:
+  using: 'node20'
+  main: 'bin/action.js'

@@ -1,0 +1,61 @@
+# Example workflow: copy into your repo as .github/workflows/docgrity.yml
+name: Docgrity docs scan
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # weekly, Monday 06:00 UTC
+  pull_request:
+    paths: ['**/*.md']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write   # only needed when create_issues: true
+  models: read    # GitHub Models (default provider, free)
+  pages: write    # only needed for the Pages report job below
+  id-token: write # only needed for the Pages report job below
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so potential owners resolve via git log
+
+      - name: Docgrity scan
+        id: docgrity
+        uses: ujjavala/docgrity-vscode/action@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          provider: github-models      # or gemini/openai/anthropic + api_key
+          # api_key: ${{ secrets.DOCGRITY_API_KEY }}
+          create_issues: ${{ github.event_name == 'schedule' }} # opt-in: only weekly runs raise issues
+          max_new_issues: 5
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docgrity-report
+          path: docgrity-report/
+
+  # Optional: publish the report to GitHub Pages (visibility follows repo access).
+  publish-report:
+    needs: scan
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: docgrity-report
+          path: site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

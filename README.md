@@ -5,6 +5,17 @@
 The repo-docs sibling of the [Docgrity Confluence app](https://ujjavala.github.io/docgrity-site/).
 Scoped deliberately: **markdown files only** (`**/*.md` — READMEs, ADRs, runbooks, guides).
 
+This repo contains all three repo-docs surfaces:
+
+| Surface | Where | Acts? |
+|---|---|---|
+| **VS Code extension** (this root) | interactive scans in the editor | raises issues, human-approved one at a time |
+| **GitHub Action** ([action/](action/)) | CI: schedule + PRs | opt-in deduped issues, job summary, HTML report |
+| **Local CLI** ([action/bin/docgrity.js](action/bin/docgrity.js)) | your terminal | **read-only** report dashboard, no actions |
+
+See [action/README.md](action/README.md) for Action and CLI usage
+(`uses: ujjavala/docgrity-vscode/action@main`).
+
 ## What it does
 
 1. **Scan** — `Docgrity: Scan repository docs` collects your markdown files, picks

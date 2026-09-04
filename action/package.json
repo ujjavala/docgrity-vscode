@@ -1,0 +1,13 @@
+{
+  "name": "docgrity-action",
+  "version": "0.1.0",
+  "description": "Docgrity doc-integrity scans for CI and local use: contradictions, duplicates and open questions across repository markdown docs.",
+  "type": "module",
+  "bin": { "docgrity": "bin/docgrity.js" },
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "scan": "node bin/docgrity.js scan"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

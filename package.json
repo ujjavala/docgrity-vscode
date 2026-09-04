@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "ujjavala",
   "repository": { "type": "git", "url": "https://github.com/ujjavala/docgrity-vscode" },
+  "bin": { "docgrity": "action/bin/docgrity.js" },
   "engines": { "vscode": "^1.95.0" },
   "categories": ["AI", "Linters", "Other"],
   "main": "./out/extension.js",
