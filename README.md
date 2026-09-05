@@ -1,6 +1,11 @@
 # Docgrity for VS Code
 
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/ujjavala.docgrity?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=ujjavala.docgrity)
+[![CI](https://github.com/ujjavala/docgrity-vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/ujjavala/docgrity-vscode/actions/workflows/ci.yml)
+
 **Find where your repository's docs disagree with themselves — and raise a GitHub issue to get it fixed.**
+
+**Install:** search “Docgrity” in the Extensions view, or `code --install-extension ujjavala.docgrity`
 
 The repo-docs sibling of the [Docgrity Confluence app](https://ujjavala.github.io/docgrity-site/).
 Scoped deliberately: **markdown files only** (`**/*.md` — READMEs, ADRs, runbooks, guides).
