@@ -1,6 +1,6 @@
 {
   "name": "docgrity",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Docgrity doc-integrity scans for CI and local use: contradictions, duplicates and open questions across repository markdown docs. Read-only CLI — generates an HTML report; never posts anything.",
   "type": "module",
   "bin": { "docgrity": "bin/docgrity.js" },

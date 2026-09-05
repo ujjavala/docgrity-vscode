@@ -4,12 +4,10 @@
   "description": "Finds contradictions, duplicates and open questions across your repository's markdown docs, and raises GitHub issues to get them fixed. Uses your own Copilot subscription — no keys, no servers.",
   "version": "0.1.2",
   "publisher": "ujjavala",
+  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/ujjavala/docgrity-vscode"
-  },
-  "bin": {
-    "docgrity": "action/bin/docgrity.js"
   },
   "icon": "media/icon.png",
   "engines": {
