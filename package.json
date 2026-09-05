@@ -2,7 +2,7 @@
   "name": "docgrity",
   "displayName": "Docgrity — Doc Integrity for Repos",
   "description": "Finds contradictions, duplicates and open questions across your repository's markdown docs, and raises GitHub issues to get them fixed. Uses your own Copilot subscription — no keys, no servers.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "ujjavala",
   "repository": {
     "type": "git",
@@ -81,7 +81,10 @@
       "properties": {
         "docgrity.mode": {
           "type": "string",
-          "enum": ["report-only", "report-and-issue"],
+          "enum": [
+            "report-only",
+            "report-and-issue"
+          ],
           "enumDescriptions": [
             "Scan and show findings in the editor only. The 'Raise GitHub issue' action is hidden — nothing can be posted anywhere.",
             "Scan, show findings, and allow raising GitHub issues (each one previewed and human-approved before posting)."
