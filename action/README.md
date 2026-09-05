@@ -52,7 +52,27 @@ What it does per run:
 |---|---|---|
 | `anthropic` / `openai` / `gemini` | `api_key` input (use a repo secret) — defaults: `claude-3-5-haiku-latest`, `gpt-4o-mini`, `gemini-flash` | your key |
 | `ollama` (CLI default) | none — local or tunnelled endpoint | free, fully private |
+| `none` (no-agent mode) | none — zero LLM calls | free, instant, fully offline |
 | `github-models` | none — uses `GITHUB_TOKEN` with `models: read` | **being retired by GitHub** (HTTP 410) — switch to a provider above |
+
+### No-agent mode (`provider: none`)
+
+Pure algorithms, no model, no keys, no network:
+
+| Check | How | Notes |
+|---|---|---|
+| **Duplicates** | verbatim shared-block detection + TF-IDF similarity | catches copy-paste duplication; paraphrased duplication needs AI |
+| **Open questions** | explicit markers (`TODO`, `TBD`, `FIXME`, `???`, "open question"…) | deterministic — high confidence; subtle unanswered questions need AI |
+| **Contradictions** | ❌ **requires AI intelligence** (semantic understanding) — skipped, and the report says so | never guessed at heuristically |
+
+Confidence is *measured*, not guessed: duplicate confidence comes from the
+actual verbatim-overlap ratio; marker-based open questions score 0.85–0.95.
+Tuned for precision — paraphrased text, shared code samples and boilerplate
+headings never fire. Evidence is verbatim by construction. Findings carry
+`method: heuristic`, and issue drafts use a deterministic template.
+
+Great as a zero-setup PR pre-check (heuristics on every PR, full AI scan weekly)
+or when no key/model is available.
 
 ## Local CLI (read-only)
 
@@ -80,7 +100,8 @@ Usage: docgrity scan [options]
   --max-pairs <n>         Max document pairs (default: 25)
   --threshold-duplicate / --threshold-contradiction / --threshold-open-question <0..1>
 
-  --provider <p>          ollama | gemini | openai | anthropic | github-models
+  --provider <p>          none | ollama | gemini | openai | anthropic | github-models
+                          (none = no-agent mode: algorithms only, contradictions skipped)
   --model <m>             Model name
   --endpoint <url>        Ollama endpoint (default http://localhost:11434)
 
@@ -95,6 +116,7 @@ fully private — nothing leaves your machine).
 Examples:
 
 ```bash
+docgrity scan --provider none --open                      # no-agent: no model, no keys
 docgrity scan --checks contradictions                     # one check only
 docgrity scan --checks duplicates,open-questions --max-pairs 10
 docgrity scan --provider ollama --model llama3.1:8b       # fully local

@@ -7,6 +7,7 @@
  * Only runs when create_issues is explicitly enabled (opt-in guard).
  */
 import { draftIssue } from './llm.js';
+import { templateIssue } from './heuristics.js';
 
 const MARKER = (fp) => `<!-- docgrity:fingerprint:${fp} -->`;
 const LABEL = 'docgrity';
@@ -71,7 +72,9 @@ export async function syncIssues({ client, token, slug, findings, maxNewIssues =
       result.skipped++;
       continue;
     }
-    const draft = await draftIssue(client, f);
+    // No LLM client (no-agent mode) → deterministic template draft; evidence is
+    // already verbatim, so nothing is lost except prose polish.
+    const draft = client ? await draftIssue(client, f) : templateIssue(f);
     const body = `${draft.body}
 
 ---

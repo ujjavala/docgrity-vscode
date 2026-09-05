@@ -6,6 +6,7 @@
 import crypto from 'crypto';
 import { collectCorpus, selectCandidatePairs, potentialOwner } from './corpus.js';
 import { assessContradiction, assessDuplicate, assessOpenQuestions } from './llm.js';
+import { heuristicDuplicate, heuristicOpenQuestions } from './heuristics.js';
 
 const norm = (s) => s.replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -37,9 +38,17 @@ export async function runScan(root, opts = {}) {
   } = opts;
 
   const docs = await collectCorpus(root, { maxFiles });
+  // No-agent (heuristic) mode when no LLM client is provided.
+  const heuristic = !client;
+  const notes = [];
+  if (heuristic && checks.contradictions) {
+    notes.push('Contradiction detection requires an AI model (semantic understanding) — skipped in no-agent mode.');
+    log('Note: contradictions need AI — skipped (no-agent mode).');
+  }
   // Pair selection is only needed for the pairwise checks.
-  const pairs = checks.duplicates || checks.contradictions ? selectCandidatePairs(docs, maxPairs) : [];
-  log(`Corpus: ${docs.length} markdown docs; assessing ${pairs.length} candidate pairs`);
+  const pairwise = checks.duplicates || (checks.contradictions && !heuristic);
+  const pairs = pairwise ? selectCandidatePairs(docs, maxPairs) : [];
+  log(`Corpus: ${docs.length} markdown docs; assessing ${pairs.length} candidate pairs${heuristic ? ' (heuristic, no LLM)' : ''}`);
   const findings = [];
   const now = new Date().toISOString();
 
@@ -53,10 +62,14 @@ export async function runScan(root, opts = {}) {
   };
 
   let i = 0;
-  for (const { a, b } of pairs) {
+  for (const { a, b, similarity } of pairs) {
     i++;
     log(`Pair ${i}/${pairs.length}: ${a.relPath} <-> ${b.relPath}`);
-    const dup = checks.duplicates ? await assessDuplicate(client, a, b) : null;
+    const dup = checks.duplicates
+      ? heuristic
+        ? heuristicDuplicate(a, b, similarity)
+        : await assessDuplicate(client, a, b)
+      : null;
     if (
       dup &&
       dup.output.is_duplicate &&
@@ -79,11 +92,12 @@ export async function runScan(root, opts = {}) {
         potentialOwners: await owners([a, b]),
         model: dup.model,
         promptVersion: dup.promptVersion,
+        method: heuristic ? 'heuristic' : 'llm',
         createdAt: now,
       });
     }
 
-    const con = checks.contradictions ? await assessContradiction(client, a, b) : null;
+    const con = checks.contradictions && !heuristic ? await assessContradiction(client, a, b) : null;
     if (
       con &&
       con.output.is_contradiction &&
@@ -106,6 +120,7 @@ export async function runScan(root, opts = {}) {
         potentialOwners: await owners([a, b]),
         model: con.model,
         promptVersion: con.promptVersion,
+        method: 'llm',
         createdAt: now,
       });
     }
@@ -116,7 +131,7 @@ export async function runScan(root, opts = {}) {
   for (const doc of oqDocs) {
     j++;
     log(`Open questions ${j}/${oqDocs.length}: ${doc.relPath}`);
-    const oq = await assessOpenQuestions(client, doc);
+    const oq = heuristic ? heuristicOpenQuestions(doc) : await assessOpenQuestions(client, doc);
     const kept = oq.output.questions.filter(
       (q) => q.confidence >= thresholds.openQuestion && verifyExcerpts([q], [doc])
     );
@@ -133,10 +148,20 @@ export async function runScan(root, opts = {}) {
         potentialOwners: await owners([doc]),
         model: oq.model,
         promptVersion: oq.promptVersion,
+        method: heuristic ? 'heuristic' : 'llm',
         createdAt: now,
       });
     }
   }
 
-  return { findings, stats: { docs: docs.length, pairs: pairs.length, scannedAt: now } };
+  return {
+    findings,
+    stats: {
+      docs: docs.length,
+      pairs: pairs.length,
+      scannedAt: now,
+      mode: heuristic ? 'heuristic' : 'llm',
+      ...(notes.length ? { notes } : {}),
+    },
+  };
 }

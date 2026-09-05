@@ -94,6 +94,19 @@
           "default": "report-and-issue",
           "description": "What Docgrity is allowed to do. 'report-only' guarantees the extension never posts anything."
         },
+        "docgrity.engine": {
+          "type": "string",
+          "enum": [
+            "ai",
+            "no-agent"
+          ],
+          "enumDescriptions": [
+            "Use an AI model (via your Copilot subscription) for semantic assessment — all three checks available.",
+            "Pure algorithms, zero LLM calls: duplicates (verbatim shared blocks + TF-IDF) and open questions (TODO/TBD/FIXME/??? markers). Contradiction detection requires AI intelligence and is skipped."
+          ],
+          "default": "ai",
+          "description": "Scan engine. 'no-agent' needs no model, no Copilot, no keys — instant and fully offline — but cannot detect contradictions."
+        },
         "docgrity.checks.duplicates": {
           "type": "boolean",
           "default": true,

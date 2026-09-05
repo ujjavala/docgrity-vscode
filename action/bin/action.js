@@ -18,13 +18,19 @@ const slug = process.env.GITHUB_REPOSITORY ?? '';
 const branch = (process.env.GITHUB_REF_NAME ?? 'main').replace(/^refs\/heads\//, '');
 
 try {
-  const client = makeClient({
-    provider: input('provider', 'github-models'),
-    apiKey: input('api_key'),
-    githubToken: token,
-  });
+  const provider = input('provider', 'github-models');
+  // provider: none → no-agent mode: heuristic duplicates + open questions,
+  // contradictions skipped (they need AI), template-drafted issues.
+  const client =
+    provider === 'none'
+      ? null
+      : makeClient({
+          provider,
+          apiKey: input('api_key'),
+          githubToken: token,
+        });
 
-  console.log(`Docgrity scan on ${slug} (${branch})`);
+  console.log(`Docgrity scan on ${slug} (${branch})${provider === 'none' ? ' — no-agent (heuristic) mode' : ''}`);
   const { findings, stats } = await runScan(root, { client, log: (m) => console.log(m) });
 
   // Opt-in issue sync (deduped by fingerprint, capped, auto-close resolved).

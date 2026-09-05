@@ -7,6 +7,7 @@ import * as crypto from 'node:crypto';
 import { collectCorpus, Doc } from './corpus';
 import { selectCandidatePairs } from './candidates';
 import { assessContradiction, assessDuplicate, assessOpenQuestions, assessPair, OpenQuestion } from '../agents/assess';
+import { heuristicDuplicate, heuristicOpenQuestions } from './heuristics';
 import { Finding, FindingStore } from '../findings/store';
 import { potentialOwner } from '../github/owners';
 import { verifyExcerpts } from '../core/verify';
@@ -40,9 +41,19 @@ export async function runScan(
   const checkDup = cfg.get<boolean>('checks.duplicates', true);
   const checkCon = cfg.get<boolean>('checks.contradictions', true);
   const checkOq = cfg.get<boolean>('checks.openQuestions', true);
+  // No-agent mode: pure algorithms, zero LLM calls. Duplicates (verbatim
+  // shared blocks) and open questions (explicit markers) work; contradictions
+  // require AI intelligence and are skipped — the user is told, not guessed at.
+  const heuristic = cfg.get<string>('engine', 'ai') === 'no-agent';
 
   if (!checkDup && !checkCon && !checkOq) {
     throw new Error('All checks are disabled — enable at least one docgrity.checks.* setting.');
+  }
+  if (heuristic && checkCon) {
+    log.info('No-agent mode: contradiction detection requires an AI model — skipped.');
+    void vscode.window.showInformationMessage(
+      'Docgrity no-agent mode: duplicates and open questions are detected algorithmically; contradiction detection needs an AI model and is skipped.'
+    );
   }
 
   progress.report({ message: 'Collecting markdown docs…' });
@@ -58,13 +69,20 @@ export async function runScan(
   const now = () => new Date().toISOString();
 
   let i = 0;
-  const pairResults = await mapLimit(pairs, CONCURRENCY, async ({ a, b }) => {
+  const pairResults = await mapLimit(pairs, CONCURRENCY, async ({ a, b, similarity }) => {
     if (token.isCancellationRequested) return null;
     i++;
     progress.report({ message: `Assessing pair ${i}/${pairs.length}: ${a.relPath} ↔ ${b.relPath}` });
 
     const out: Finding[] = [];
 
+    if (heuristic) {
+      if (checkDup) {
+        const df = await duplicateFinding(heuristicDuplicate(a, b, similarity), a, b, tDup);
+        if (df) out.push(df);
+      }
+      return out; // contradictions skipped — they need AI
+    }
     if (checkDup && checkCon) {
       // Combined single-call assessment: the model reads the pair once.
       const pair = await assessPair(a, b, token);
@@ -107,7 +125,7 @@ export async function runScan(
       if (token.isCancellationRequested) return null;
       j++;
       progress.report({ message: `Open questions ${j}/${oqDocs.length}: ${doc.relPath}` });
-      const oq = await assessOpenQuestions(doc, token);
+      const oq = heuristic ? heuristicOpenQuestions(doc) : await assessOpenQuestions(doc, token);
       const kept: OpenQuestion[] = oq.output.questions.filter(
         (q: OpenQuestion) => q.confidence >= tOq && verify([q], [doc])
       );

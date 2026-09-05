@@ -154,7 +154,8 @@ export function renderReport({ findings, stats, repoSlug, branch }) {
 <div class="wrap">
   <div class="hero">
     <h1>Docgrity — documentation-integrity report</h1>
-    <div class="meta">${esc(repoSlug ?? 'local scan')} · scanned ${esc(stats.scannedAt)} · ${stats.docs} markdown docs · ${stats.pairs} pairs assessed</div>
+    <div class="meta">${esc(repoSlug ?? 'local scan')} · scanned ${esc(stats.scannedAt)} · ${stats.docs} markdown docs · ${stats.pairs} pairs assessed${stats.mode === 'heuristic' ? ' · no-agent (heuristic) mode' : ''}</div>
+    ${(stats.notes ?? []).map((n) => `<div class="meta" style="margin-top:6px">⚠ ${esc(n)}</div>`).join('')}
   </div>
   <div class="stats">
     <button class="stat" data-target="all"><div><div class="label">Open findings</div><div class="num">${findings.length}</div><div class="sub">view all</div></div><div class="badge ${findings.length ? 'findings' : 'ok'}">${icon(findings.length ? 'findings' : 'check')}</div></button>

@@ -8,7 +8,10 @@ branding:
   color: 'blue'
 inputs:
   provider:
-    description: 'LLM provider: github-models (default, uses GITHUB_TOKEN), gemini, openai, anthropic'
+    description: >-
+      LLM provider: anthropic, openai, gemini (api_key required), ollama, github-models
+      (retiring), or "none" for no-agent mode — heuristic duplicates + open questions
+      only; contradiction detection requires an AI model and is skipped.
     default: 'github-models'
   api_key:
     description: 'API key for gemini/openai/anthropic (pass a repo secret). Not needed for github-models.'

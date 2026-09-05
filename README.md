@@ -125,6 +125,22 @@ findings rather than wrong ones. 8B+ instruct models work best.
 available — there is no Copilot API for terminals or CI. Use `ollama` (keyless) or
 bring your own `anthropic` / `openai` / `gemini` key instead.
 
+## No-agent mode (no AI at all)
+
+Set `docgrity.engine` to `no-agent` (CLI/Action: `provider: none`) to scan with
+pure algorithms — no model, no Copilot, no keys, fully offline:
+
+- **Duplicates** — verbatim shared-block detection + TF-IDF similarity (catches
+  copy-paste duplication; paraphrased duplication needs AI).
+- **Open questions** — explicit markers (`TODO`, `TBD`, `FIXME`, `???`, "open
+  question"…) with deterministic high confidence.
+- **Contradictions** — ❌ **require AI intelligence** (semantic understanding of
+  conflicting claims). They are skipped in no-agent mode — you're told, never
+  given heuristic guesses.
+
+Evidence stays verbatim, owners still come from git history, and raised issues
+use a deterministic template.
+
 ## Design principles (shared with the Forge app)
 
 - Typed JSON outputs only — model responses are validated in code, never trusted prose.

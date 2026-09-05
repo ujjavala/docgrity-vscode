@@ -54,8 +54,12 @@ Options:
   --threshold-contradiction <0..1>   Min confidence, contradictions (default: 0.7)
   --threshold-open-question <0..1>   Min confidence, open questions (default: 0.6)
 
-  --provider <p>          ollama | gemini | openai | anthropic | github-models
+  --provider <p>          none | ollama | gemini | openai | anthropic | github-models
                           (default: auto — see below)
+                          none = no-agent mode: pure algorithms, zero LLM calls.
+                          Detects duplicates (verbatim shared blocks + TF-IDF)
+                          and open questions (TODO/TBD/FIXME/???… markers).
+                          Contradictions REQUIRE an AI model and are skipped.
   --model <m>             Model name (provider-specific default otherwise)
   --endpoint <url>        Ollama endpoint (default: http://localhost:11434,
                           or DOCGRITY_OLLAMA_URL; supports tunnelled remotes)
@@ -74,6 +78,7 @@ Provider auto-detection (when --provider is omitted):
 
 Examples:
   docgrity scan --open
+  docgrity scan --provider none              # no-agent: no model, no keys, instant
   docgrity scan --checks contradictions
   docgrity scan --checks duplicates,open-questions --max-pairs 10
   docgrity scan --provider ollama --model llama3.1:8b
@@ -148,16 +153,22 @@ const provider =
 const checks = parseChecks(args.checks);
 
 try {
-  const client = makeClient({
-    provider,
-    apiKey: process.env.DOCGRITY_API_KEY,
-    githubToken: process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
-    model: args.model,
-    endpoint: args.endpoint,
-  });
+  const client =
+    provider === 'none'
+      ? null
+      : makeClient({
+          provider,
+          apiKey: process.env.DOCGRITY_API_KEY,
+          githubToken: process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
+          model: args.model,
+          endpoint: args.endpoint,
+        });
 
   const enabled = Object.entries(checks).filter(([, on]) => on).map(([k]) => k).join(', ');
-  console.log(`Docgrity local scan (read-only) — provider: ${provider}; checks: ${enabled}`);
+  console.log(`Docgrity local scan (read-only) — provider: ${provider}${provider === 'none' ? ' (no-agent, heuristics only)' : ''}; checks: ${enabled}`);
+  if (provider === 'none' && checks.contradictions) {
+    console.log('  Note: contradiction detection needs AI intelligence — it will be skipped. Use an LLM provider to enable it.');
+  }
   const { findings, stats } = await runScan(root, {
     client,
     checks,
