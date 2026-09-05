@@ -32,11 +32,13 @@ export async function runScan(root, opts = {}) {
     maxFiles = 200,
     maxPairs = 25,
     thresholds = { duplicate: 0.75, contradiction: 0.7, openQuestion: 0.6 },
+    checks = { duplicates: true, contradictions: true, openQuestions: true },
     log = () => {},
   } = opts;
 
   const docs = await collectCorpus(root, { maxFiles });
-  const pairs = selectCandidatePairs(docs, maxPairs);
+  // Pair selection is only needed for the pairwise checks.
+  const pairs = checks.duplicates || checks.contradictions ? selectCandidatePairs(docs, maxPairs) : [];
   log(`Corpus: ${docs.length} markdown docs; assessing ${pairs.length} candidate pairs`);
   const findings = [];
   const now = new Date().toISOString();
@@ -54,8 +56,9 @@ export async function runScan(root, opts = {}) {
   for (const { a, b } of pairs) {
     i++;
     log(`Pair ${i}/${pairs.length}: ${a.relPath} <-> ${b.relPath}`);
-    const dup = await assessDuplicate(client, a, b);
+    const dup = checks.duplicates ? await assessDuplicate(client, a, b) : null;
     if (
+      dup &&
       dup.output.is_duplicate &&
       dup.output.confidence >= thresholds.duplicate &&
       verifyExcerpts(dup.output.evidence, [a, b])
@@ -80,8 +83,9 @@ export async function runScan(root, opts = {}) {
       });
     }
 
-    const con = await assessContradiction(client, a, b);
+    const con = checks.contradictions ? await assessContradiction(client, a, b) : null;
     if (
+      con &&
       con.output.is_contradiction &&
       con.output.confidence >= thresholds.contradiction &&
       verifyExcerpts(con.output.evidence, [a, b])
@@ -108,9 +112,10 @@ export async function runScan(root, opts = {}) {
   }
 
   let j = 0;
-  for (const doc of docs) {
+  const oqDocs = checks.openQuestions ? docs : [];
+  for (const doc of oqDocs) {
     j++;
-    log(`Open questions ${j}/${docs.length}: ${doc.relPath}`);
+    log(`Open questions ${j}/${oqDocs.length}: ${doc.relPath}`);
     const oq = await assessOpenQuestions(client, doc);
     const kept = oq.output.questions.filter(
       (q) => q.confidence >= thresholds.openQuestion && verifyExcerpts([q], [doc])

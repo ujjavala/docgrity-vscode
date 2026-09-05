@@ -43,20 +43,55 @@ What it does per run:
 
 | provider | key | cost |
 |---|---|---|
-| `github-models` (default) | none — uses `GITHUB_TOKEN` with `models: read` | free |
+| `github-models` (default in CI) | none — uses `GITHUB_TOKEN` with `models: read` | free (being retired by GitHub — prefer a BYO provider) |
 | `gemini` / `openai` / `anthropic` | `api_key` input (use a repo secret) | your key |
+| `ollama` | none — local or tunnelled endpoint | free, fully private |
 
 ## Local CLI (read-only)
 
 ```bash
-npx github:ujjavala/docgrity-vscode scan --open
-# or with a BYO key:
-DOCGRITY_API_KEY=... npx github:ujjavala/docgrity-vscode scan --provider gemini --open
+npm i -g docgrity
+docgrity scan --open
 ```
+
+or without installing: `npx docgrity scan --open` (from a repo checkout:
+`npx github:ujjavala/docgrity-vscode scan --open`).
 
 Runs the same scan locally and opens the **report dashboard**: findings, evidence,
 doc links and potential owners. **The CLI never raises issues or takes any action** —
 by design, local scans observe; only CI (explicitly opted in) acts.
+
+```
+Usage: docgrity scan [options]
+
+  --dir <path>            Directory to scan (default: .)
+  --out <path>            Report output directory (default: docgrity-report)
+  --open                  Open the HTML report when done
+
+  --checks <list>         duplicates, contradictions, open-questions — any combination
+  --max-files <n>         Max markdown files (default: 200)
+  --max-pairs <n>         Max document pairs (default: 25)
+  --threshold-duplicate / --threshold-contradiction / --threshold-open-question <0..1>
+
+  --provider <p>          ollama | gemini | openai | anthropic | github-models
+  --model <m>             Model name
+  --endpoint <url>        Ollama endpoint (default http://localhost:11434)
+
+  --version, -v           Installed version + latest on npm
+  --help, -h              Full help
+```
+
+Provider auto-detection: `DOCGRITY_API_KEY` set → `gemini`; else `GITHUB_TOKEN` →
+`github-models`; else → `ollama` (local, fully private — nothing leaves your machine).
+
+Examples:
+
+```bash
+docgrity scan --checks contradictions                     # one check only
+docgrity scan --checks duplicates,open-questions --max-pairs 10
+docgrity scan --provider ollama --model llama3.1:8b       # fully local
+DOCGRITY_API_KEY=... docgrity scan --provider gemini --open
+```
 
 ## Design principles (shared across all Docgrity surfaces)
 

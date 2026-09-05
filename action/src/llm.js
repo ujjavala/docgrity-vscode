@@ -8,7 +8,7 @@ const num = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, Number(v) || 0));
 const str = (v) => (typeof v === 'string' ? v : String(v ?? ''));
 const SEVERITIES = new Set(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
 
-export function makeClient({ provider, apiKey, githubToken, model }) {
+export function makeClient({ provider, apiKey, githubToken, model, endpoint }) {
   const p = provider || 'github-models';
   if (p === 'github-models') {
     if (!githubToken) throw new Error('github-models provider requires GITHUB_TOKEN (or GH_TOKEN)');
@@ -27,6 +27,15 @@ export function makeClient({ provider, apiKey, githubToken, model }) {
   }
   if (p === 'gemini') return gemini(requireKey(apiKey, p), model || 'gemini-3.6-flash');
   if (p === 'anthropic') return anthropic(requireKey(apiKey, p), model || 'claude-3-5-haiku-latest');
+  if (p === 'ollama') {
+    // Local (or tunnelled) Ollama — OpenAI-compatible endpoint, no key needed.
+    const base = (endpoint || process.env.DOCGRITY_OLLAMA_URL || 'http://localhost:11434').replace(/\/$/, '');
+    return openaiCompatible({
+      url: `${base}/v1/chat/completions`,
+      key: apiKey || 'ollama',
+      model: model || 'llama3.1:8b',
+    });
+  }
   throw new Error(`Unknown provider: ${p}`);
 }
 
