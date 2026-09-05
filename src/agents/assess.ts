@@ -6,31 +6,22 @@
 import * as vscode from 'vscode';
 import { PROMPTS } from './prompts';
 import type { Doc } from '../scanner/corpus';
+import { log } from '../log';
+import {
+  extractJson,
+  num,
+  str,
+  validateEvidence,
+  SEVERITIES,
+} from '../core/json';
 
-export interface Evidence {
-  page: 'A' | 'B';
-  excerpt: string;
-}
+export type { Evidence } from '../core/json';
 
 export interface OpenQuestion {
   question: string;
   excerpt: string;
   confidence: number;
   severity: string;
-}
-
-const num = (v: unknown, lo = 0, hi = 1): number =>
-  Math.min(hi, Math.max(lo, Number(v) || 0));
-const str = (v: unknown): string => (typeof v === 'string' ? v : String(v ?? ''));
-const SEVERITIES = new Set(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
-
-function validateEvidence(list: unknown): Evidence[] {
-  return (Array.isArray(list) ? list : [])
-    .map((e) => ({
-      page: (e?.page === 'B' ? 'B' : 'A') as 'A' | 'B',
-      excerpt: str(e?.excerpt).slice(0, 1000),
-    }))
-    .filter((e) => e.excerpt);
 }
 
 async function pickModel(): Promise<vscode.LanguageModelChat> {
@@ -52,14 +43,8 @@ async function pickModel(): Promise<vscode.LanguageModelChat> {
         'or set docgrity.model.vendor/family to a locally provided model (e.g. Ollama).'
     );
   }
+  log.debug(`Model selected: ${any[0].id} (vendor=${vendor || 'any'}, no family match)`);
   return any[0];
-}
-
-function extractJson(text: string): unknown {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end <= start) throw new Error('No JSON object in model output');
-  return JSON.parse(text.slice(start, end + 1));
 }
 
 export async function completeJson<T>(opts: {
@@ -73,10 +58,18 @@ export async function completeJson<T>(opts: {
     vscode.LanguageModelChatMessage.Assistant(opts.system),
     vscode.LanguageModelChatMessage.User(opts.prompt),
   ];
+  const started = Date.now();
   const response = await model.sendRequest(messages, {}, opts.token);
   let text = '';
   for await (const chunk of response.text) text += chunk;
-  return { output: opts.validate(extractJson(text)), model: model.id };
+  try {
+    const output = opts.validate(extractJson(text));
+    log.trace(`LLM response validated (model=${model.id}, ${Date.now() - started}ms)`);
+    return { output, model: model.id };
+  } catch (err) {
+    log.warn(`LLM response rejected (model=${model.id}): ${(err as Error).message}`);
+    throw err;
+  }
 }
 
 function pairPrompt(a: Doc, b: Doc): string {

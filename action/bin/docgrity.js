@@ -5,7 +5,7 @@
  * cannot raise issues or take any action: local scans observe, CI acts.
  *
  * Usage:
- *   docgrity scan [--provider gemini|openai|anthropic|github-models]
+ *   docgrity scan [--provider gemini|openai|anthropic|github-models] [--model m]
  *                 [--dir .] [--out docgrity-report] [--open]
  * Keys via env: DOCGRITY_API_KEY (BYO providers) or GITHUB_TOKEN (github-models).
  */
@@ -45,6 +45,7 @@ try {
     provider,
     apiKey: process.env.DOCGRITY_API_KEY,
     githubToken: process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
+    model: args.model,
   });
 
   console.log(`Docgrity local scan (read-only) — provider: ${provider}`);

@@ -3,7 +3,7 @@
  * config: the extension's scope is repository documentation.
  */
 import * as vscode from 'vscode';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 
 export interface Doc {
   uri: vscode.Uri;

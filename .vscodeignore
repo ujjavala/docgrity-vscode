@@ -1,0 +1,13 @@
+.vscode/**
+src/**
+test/**
+node_modules/**
+samples/**
+action/**
+.github/**
+tsconfig.json
+vitest.config.ts
+.gitignore
+**/*.map
+media/icon.svg.png
+*.vsix

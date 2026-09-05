@@ -25,7 +25,7 @@ export function makeClient({ provider, apiKey, githubToken, model }) {
       model: model || 'gpt-4o-mini',
     });
   }
-  if (p === 'gemini') return gemini(requireKey(apiKey, p), model || 'gemini-2.0-flash');
+  if (p === 'gemini') return gemini(requireKey(apiKey, p), model || 'gemini-3.6-flash');
   if (p === 'anthropic') return anthropic(requireKey(apiKey, p), model || 'claude-3-5-haiku-latest');
   throw new Error(`Unknown provider: ${p}`);
 }
@@ -35,11 +35,29 @@ function requireKey(key, provider) {
   return key;
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Fetch with retry on 429/5xx (transient rate limits and overload). */
+async function llmFetch(url, init, retries = 4) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, init);
+    if (res.ok) return res;
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable || attempt >= retries) {
+      throw new Error(`LLM HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    }
+    const retryAfter = Number(res.headers.get('retry-after')) || 0;
+    // Rate limits are usually per-minute windows — wait longer for 429s.
+    const base = res.status === 429 ? 15000 * (attempt + 1) : 2000 * 2 ** attempt;
+    await sleep(Math.max(retryAfter * 1000, base));
+  }
+}
+
 function openaiCompatible({ url, key, model }) {
   return {
     model,
     async complete(system, prompt) {
-      const res = await fetch(url, {
+      const res = await llmFetch(url, {
         method: 'POST',
         headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -51,7 +69,6 @@ function openaiCompatible({ url, key, model }) {
           temperature: 0,
         }),
       });
-      if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
       const data = await res.json();
       return data.choices?.[0]?.message?.content ?? '';
     },
@@ -62,7 +79,7 @@ function gemini(key, model) {
   return {
     model,
     async complete(system, prompt) {
-      const res = await fetch(
+      const res = await llmFetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
         {
           method: 'POST',
@@ -74,7 +91,6 @@ function gemini(key, model) {
           }),
         }
       );
-      if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
       const data = await res.json();
       return data.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ?? '';
     },
@@ -85,7 +101,7 @@ function anthropic(key, model) {
   return {
     model,
     async complete(system, prompt) {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await llmFetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'x-api-key': key,
@@ -99,7 +115,6 @@ function anthropic(key, model) {
           messages: [{ role: 'user', content: prompt }],
         }),
       });
-      if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
       const data = await res.json();
       return (data.content ?? []).map((b) => b.text ?? '').join('');
     },

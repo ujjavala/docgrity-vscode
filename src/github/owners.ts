@@ -3,8 +3,9 @@
  * *potential* (mirrors the Forge app's inferred-ownership rule).
  */
 import * as vscode from 'vscode';
-import { execFile } from 'child_process';
-import * as path from 'path';
+import { execFile } from 'node:child_process';
+import * as path from 'node:path';
+import { parseGithubSlug } from '../core/slug';
 
 function git(args: string[], cwd: string): Promise<string> {
   return new Promise((resolve) => {
@@ -29,6 +30,5 @@ export async function githubRepoSlug(): Promise<string | undefined> {
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (!folder) return undefined;
   const url = await git(['remote', 'get-url', 'origin'], folder.uri.fsPath);
-  const m = url.match(/github\.com[:/]([^/]+)\/([^/.]+)(?:\.git)?/);
-  return m ? `${m[1]}/${m[2]}` : undefined;
+  return parseGithubSlug(url);
 }

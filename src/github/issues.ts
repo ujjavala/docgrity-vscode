@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import { Finding, FindingStore } from '../findings/store';
 import { draftIssue } from '../agents/assess';
 import { githubRepoSlug } from './owners';
+import { log } from '../log';
 
 export async function raiseIssue(finding: Finding, store: FindingStore): Promise<void> {
   if (finding.issueUrl) {
@@ -70,6 +71,7 @@ export async function raiseIssue(finding: Finding, store: FindingStore): Promise
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
+    log.error(`GitHub issue creation failed: HTTP ${res.status} on ${slug}`);
     void vscode.window.showErrorMessage(
       `Docgrity: GitHub issue creation failed (${res.status}). ${text.slice(0, 200)}`
     );
@@ -77,6 +79,7 @@ export async function raiseIssue(finding: Finding, store: FindingStore): Promise
   }
 
   const issue = (await res.json()) as { html_url: string; number: number };
+  log.info(`Issue #${issue.number} created on ${slug} for finding ${finding.id} (${finding.type})`);
   await store.update({ ...finding, issueUrl: issue.html_url });
   const open = `Open #${issue.number}`;
   const pick = await vscode.window.showInformationMessage(
