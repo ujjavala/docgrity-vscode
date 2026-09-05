@@ -192,6 +192,9 @@ try {
   await writeFile(path.join(outDir, 'findings.json'), JSON.stringify({ findings, stats }, null, 2));
 
   console.log(`\n${findings.length} finding(s) across ${stats.docs} docs.`);
+  for (const f of findings) {
+    console.log(`  [${f.severity}] ${f.type} — ${(f.confidence * 100).toFixed(0)}% confidence — ${f.files.join(' + ')}`);
+  }
   console.log(`Report: ${reportPath}`);
   console.log('Note: local scans are read-only — review owners and evidence in the report; issues are only raised by CI (opt-in).');
 

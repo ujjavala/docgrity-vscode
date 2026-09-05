@@ -133,7 +133,7 @@ export function templateIssue(finding) {
   const title = `[docgrity] ${finding.type.replace('_', ' ')}: ${finding.summary.slice(0, 140)}`;
   const body = [
     `**Type:** ${finding.type}  `,
-    `**Severity:** ${finding.severity} · **Confidence:** ${finding.confidence}  `,
+    `**Severity:** ${finding.severity} · **Confidence:** ${(finding.confidence * 100).toFixed(0)}%  `,
     `**Docs:** ${finding.files.map((f) => `\`${f}\``).join(', ')}  `,
     `**Potential owner(s):** ${finding.potentialOwners.join(', ') || 'unknown'} *(from git history — potential, not asserted)*`,
     '',

@@ -39,7 +39,7 @@ export function registerDiagnostics(
         if (!range) continue;
         const d = new vscode.Diagnostic(
           range,
-          `Docgrity ${finding.type}: ${finding.summary}`,
+          `Docgrity ${finding.type} (${(finding.confidence * 100).toFixed(0)}% confidence): ${finding.summary}`,
           SEVERITY[finding.severity] ?? vscode.DiagnosticSeverity.Warning
         );
         d.source = 'docgrity';
