@@ -151,3 +151,28 @@ export function heuristicOpenQuestions(
     promptVersion: 'heuristic-v1',
   };
 }
+
+/** Deterministic issue draft — used in no-agent mode (no LLM available/allowed). */
+export function templateIssue(finding: {
+  type: string;
+  severity: string;
+  confidence: number;
+  summary: string;
+  files: string[];
+  potentialOwners: string[];
+  evidence: { sourceLabel: string; excerpt: string }[];
+}): { title: string; body: string } {
+  const title = `[docgrity] ${finding.type.replace('_', ' ')}: ${finding.summary.slice(0, 140)}`;
+  const body = [
+    `**Type:** ${finding.type}  `,
+    `**Severity:** ${finding.severity} · **Confidence:** ${finding.confidence}  `,
+    `**Docs:** ${finding.files.map((f) => `\`${f}\``).join(', ')}  `,
+    `**Potential owner(s):** ${finding.potentialOwners.join(', ') || 'unknown'} *(from git history — potential, not asserted)*`,
+    '',
+    '### Evidence',
+    ...finding.evidence.map((e) => `> ${e.excerpt.replace(/\n/g, '\n> ')}\n> — \`${e.sourceLabel}\``),
+    '',
+    `_Detected by Docgrity in no-agent (heuristic) mode — evidence is verbatim from the docs._`,
+  ].join('\n');
+  return { title: title.slice(0, 200), body: body.slice(0, 20000) };
+}

@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 import { Finding, FindingStore } from '../findings/store';
 import { draftIssue } from '../agents/assess';
+import { templateIssue } from '../scanner/heuristics';
 import { githubRepoSlug } from './owners';
 import { log } from '../log';
 
@@ -28,19 +29,23 @@ export async function raiseIssue(finding: Finding, store: FindingStore): Promise
     return;
   }
 
-  const draft = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: 'Docgrity: drafting issue…' },
-    (_p, token) =>
-      draftIssue(
-        {
-          type: finding.type,
-          summary: finding.summary,
-          evidence: finding.evidence,
-          potentialOwners: finding.potentialOwners,
-        },
-        token
-      )
-  );
+  // No-agent mode keeps its zero-LLM promise: deterministic template draft.
+  const noAgent = vscode.workspace.getConfiguration('docgrity').get<string>('engine', 'ai') === 'no-agent';
+  const draft = noAgent
+    ? templateIssue(finding)
+    : await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: 'Docgrity: drafting issue…' },
+        (_p, token) =>
+          draftIssue(
+            {
+              type: finding.type,
+              summary: finding.summary,
+              evidence: finding.evidence,
+              potentialOwners: finding.potentialOwners,
+            },
+            token
+          )
+      );
 
   // Human approval gate: show the draft before anything leaves the editor.
   const preview = await vscode.window.showInformationMessage(
