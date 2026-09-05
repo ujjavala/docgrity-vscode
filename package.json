@@ -2,7 +2,7 @@
   "name": "docgrity",
   "displayName": "Docgrity — Doc Integrity for Repos",
   "description": "Finds contradictions, duplicates and open questions across your repository's markdown docs, and raises GitHub issues to get them fixed. Uses your own Copilot subscription — no keys, no servers.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "ujjavala",
   "repository": {
     "type": "git",
@@ -27,6 +27,10 @@
       {
         "command": "docgrity.scan",
         "title": "Docgrity: Scan repository docs"
+      },
+      {
+        "command": "docgrity.selectModel",
+        "title": "Docgrity: Select AI model (Copilot / Claude / local…)"
       },
       {
         "command": "docgrity.raiseIssue",

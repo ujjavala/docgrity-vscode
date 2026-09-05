@@ -4,6 +4,7 @@ import { FindingsTree } from './findings/tree';
 import { registerDiagnostics, findRange } from './findings/diagnostics';
 import { runScan } from './scanner/scan';
 import { raiseIssue } from './github/issues';
+import { selectModelCommand } from './agents/selectModel';
 import { initLog, log } from './log';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -47,6 +48,8 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand('docgrity.clearFindings', () => store.clear()),
+
+    vscode.commands.registerCommand('docgrity.selectModel', selectModelCommand),
 
     vscode.commands.registerCommand(
       'docgrity.openEvidence',

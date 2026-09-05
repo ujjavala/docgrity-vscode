@@ -43,6 +43,42 @@ See [action/README.md](action/README.md) for Action and CLI usage
 - Issue creation uses VS Code's built-in GitHub sign-in.
 - Candidate selection is local TF-IDF — the LLM only sees the top pairs.
 
+## Choosing your model (Copilot, Claude, GPT, local llama…)
+
+Run **`Docgrity: Select AI model`** from the command palette — it lists every model
+VS Code exposes and saves your choice. Or set it manually:
+
+| Setting | Meaning | Default |
+|---|---|---|
+| `docgrity.model.vendor` | `vscode.lm` vendor id (`copilot` covers Copilot + BYOK models; empty = any) | `copilot` |
+| `docgrity.model.family` | preferred model family, e.g. `gpt-4o`, `claude-sonnet-4.5`, `llama3.1` (empty = first available) | `""` |
+
+**Options, in order of simplicity:**
+
+1. **Copilot (default)** — sign in to GitHub Copilot; nothing to configure.
+2. **Claude / GPT / Gemini via Copilot** — any model enabled in Copilot's model picker
+   is available; set `docgrity.model.family` (e.g. `claude-sonnet-4.5`) or use
+   *Select AI model*.
+3. **Local Ollama** — install [Ollama](https://ollama.com), `ollama pull llama3.1`,
+   then in Copilot Chat → **Manage models** → add the Ollama model. It registers under
+   the `copilot` vendor; pick it with *Select AI model*. Fully local — no doc content
+   leaves your machine.
+4. **Remote Ollama over a Cloudflare Tunnel** — if your model runs on another box
+   (home server, GPU rig):
+   ```bash
+   # on the machine running Ollama
+   cloudflared tunnel --url http://localhost:11434
+   ```
+   Point Copilot's Manage models → Ollama endpoint at the generated
+   `https://….trycloudflare.com` URL. Note: quick tunnels get a **new URL on every
+   restart** — re-update the endpoint each time, or create a **named tunnel** with your
+   own domain for a stable URL (`cloudflared tunnel create …`). Protect a named tunnel
+   with Cloudflare Access — an open LLM endpoint is abusable.
+
+Small local models fail Docgrity's strict-JSON validation more often than hosted
+ones; failed responses are rejected safely (never mis-recorded) — expect fewer
+findings rather than wrong ones. 8B+ instruct models work best.
+
 ## Design principles (shared with the Forge app)
 
 - Typed JSON outputs only — model responses are validated in code, never trusted prose.
