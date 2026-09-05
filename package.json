@@ -4,27 +4,54 @@
   "description": "Finds contradictions, duplicates and open questions across your repository's markdown docs, and raises GitHub issues to get them fixed. Uses your own Copilot subscription — no keys, no servers.",
   "version": "0.1.0",
   "publisher": "ujjavala",
-  "repository": { "type": "git", "url": "https://github.com/ujjavala/docgrity-vscode" },
-  "bin": { "docgrity": "action/bin/docgrity.js" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ujjavala/docgrity-vscode"
+  },
+  "bin": {
+    "docgrity": "action/bin/docgrity.js"
+  },
   "icon": "media/icon.png",
-  "engines": { "vscode": "^1.95.0" },
-  "categories": ["AI", "Linters", "Other"],
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "AI",
+    "Linters",
+    "Other"
+  ],
   "main": "./out/extension.js",
   "activationEvents": [],
   "contributes": {
     "commands": [
-      { "command": "docgrity.scan", "title": "Docgrity: Scan repository docs" },
-      { "command": "docgrity.raiseIssue", "title": "Docgrity: Raise GitHub issue for finding" },
-      { "command": "docgrity.clearFindings", "title": "Docgrity: Clear findings" }
+      {
+        "command": "docgrity.scan",
+        "title": "Docgrity: Scan repository docs"
+      },
+      {
+        "command": "docgrity.raiseIssue",
+        "title": "Docgrity: Raise GitHub issue for finding"
+      },
+      {
+        "command": "docgrity.clearFindings",
+        "title": "Docgrity: Clear findings"
+      }
     ],
     "viewsContainers": {
       "activitybar": [
-        { "id": "docgrity", "title": "Docgrity", "icon": "media/icon.svg" }
+        {
+          "id": "docgrity",
+          "title": "Docgrity",
+          "icon": "media/icon.svg"
+        }
       ]
     },
     "views": {
       "docgrity": [
-        { "id": "docgrity.findings", "name": "Findings" }
+        {
+          "id": "docgrity.findings",
+          "name": "Findings"
+        }
       ]
     },
     "menus": {
@@ -97,6 +124,6 @@
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.95.0",
     "typescript": "^5.6.0",
-    "vitest": "^2.1.0"
+    "vitest": "^3.2.7"
   }
 }
