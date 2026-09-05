@@ -45,6 +45,14 @@ export class FindingsTree implements vscode.TreeDataProvider<Node> {
       item.iconPath = new vscode.ThemeIcon(
         f.type === 'contradiction' ? 'warning' : f.type === 'duplicate' ? 'copy' : 'question'
       );
+      if (f.evidence.length > 0) {
+        // Clicking a finding jumps straight to its first evidence excerpt.
+        item.command = {
+          command: 'docgrity.openEvidence',
+          title: 'Open evidence',
+          arguments: [f.evidence[0].sourceLabel, f.evidence[0].excerpt],
+        };
+      }
       return item;
     }
     const e = node.finding.evidence[node.index];

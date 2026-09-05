@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { FindingStore, Finding } from './findings/store';
 import { FindingsTree } from './findings/tree';
 import { registerDiagnostics, findRange } from './findings/diagnostics';
+import { buildReport } from './findings/report';
 import { runScan } from './scanner/scan';
 import { raiseIssue } from './github/issues';
 import { selectModelCommand } from './agents/selectModel';
@@ -47,9 +48,16 @@ export function activate(context: vscode.ExtensionContext): void {
           (progress, token) => runScan(store, progress, token)
         );
         const suffix = result.errors > 0 ? ` ${result.errors} assessment(s) failed — see the Docgrity output log.` : '';
-        void vscode.window.showInformationMessage(
-          `Docgrity: ${result.findings} finding(s) across ${result.docs} docs (${result.pairs} pairs assessed).${suffix}`
+        const action = await vscode.window.showInformationMessage(
+          `Docgrity: ${result.findings} finding(s) across ${result.docs} docs (${result.pairs} pairs assessed).${suffix}`,
+          'View findings',
+          'Open report'
         );
+        if (action === 'View findings') {
+          await vscode.commands.executeCommand('docgrity.findings.focus');
+        } else if (action === 'Open report') {
+          await vscode.commands.executeCommand('docgrity.openReport');
+        }
       } catch (err) {
         log.error('Scan failed', err);
         void vscode.window.showErrorMessage(`Docgrity scan failed: ${(err as Error).message}`);
@@ -76,6 +84,16 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand('docgrity.clearFindings', () => store.clear()),
+
+    vscode.commands.registerCommand('docgrity.openReport', async () => {
+      const name = vscode.workspace.workspaceFolders?.[0]?.name ?? 'workspace';
+      const doc = await vscode.workspace.openTextDocument({
+        language: 'markdown',
+        content: buildReport(store.all(), name),
+      });
+      await vscode.window.showTextDocument(doc, { preview: false });
+      // Untitled by design — save it wherever you like (e.g. docgrity-report.md).
+    }),
 
     vscode.commands.registerCommand('docgrity.selectModel', selectModelCommand),
 

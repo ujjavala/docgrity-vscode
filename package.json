@@ -37,6 +37,10 @@
         "title": "Docgrity: Raise GitHub issue for finding"
       },
       {
+        "command": "docgrity.openReport",
+        "title": "Docgrity: Open findings report (markdown)"
+      },
+      {
         "command": "docgrity.clearFindings",
         "title": "Docgrity: Clear findings"
       }
