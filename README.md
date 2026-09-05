@@ -139,7 +139,9 @@ pure algorithms — no model, no Copilot, no keys, fully offline:
   given heuristic guesses.
 
 Evidence stays verbatim, owners still come from git history, and raised issues
-use a deterministic template.
+use a deterministic template. Confidence is shown on every surface — Problems
+view squiggles, the findings tree, reports, CLI output, and issue bodies — so
+you can always judge how sure a finding is.
 
 ## Design principles (shared with the Forge app)
 

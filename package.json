@@ -2,7 +2,7 @@
   "name": "docgrity",
   "displayName": "Docgrity — Doc Integrity for Repos",
   "description": "Finds contradictions, duplicates and open questions across your repository's markdown docs, and raises GitHub issues to get them fixed. Uses your own Copilot subscription — no keys, no servers.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "ujjavala",
   "private": true,
   "repository": {
