@@ -1,14 +1,38 @@
 {
-  "name": "docgrity-action",
-  "version": "0.1.0",
-  "description": "Docgrity doc-integrity scans for CI and local use: contradictions, duplicates and open questions across repository markdown docs.",
+  "name": "docgrity",
+  "version": "0.1.2",
+  "description": "Docgrity doc-integrity scans for CI and local use: contradictions, duplicates and open questions across repository markdown docs. Read-only CLI — generates an HTML report; never posts anything.",
   "type": "module",
   "bin": { "docgrity": "bin/docgrity.js" },
+  "files": [
+    "bin/",
+    "src/",
+    "action.yml",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": { "node": ">=20" },
   "scripts": {
     "scan": "node bin/docgrity.js scan",
     "test": "node --test \"test/*.test.mjs\""
   },
-  "license": "UNLICENSED",
-  "private": true
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ujjavala/docgrity-vscode.git",
+    "directory": "action"
+  },
+  "homepage": "https://ujjavala.github.io/docgrity-vscode-site/",
+  "bugs": "https://github.com/ujjavala/docgrity-vscode/issues",
+  "keywords": [
+    "documentation",
+    "markdown",
+    "lint",
+    "contradiction",
+    "duplicate",
+    "llm",
+    "cli",
+    "github-action"
+  ],
+  "author": "ujjavala",
+  "license": "MIT"
 }
