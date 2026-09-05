@@ -3,6 +3,7 @@ import { FindingStore, Finding } from './findings/store';
 import { FindingsTree } from './findings/tree';
 import { registerDiagnostics, findRange } from './findings/diagnostics';
 import { buildReport } from './findings/report';
+import { buildHtmlReport } from './findings/htmlReport';
 import { runScan } from './scanner/scan';
 import { raiseIssue } from './github/issues';
 import { selectModelCommand } from './agents/selectModel';
@@ -56,7 +57,7 @@ export function activate(context: vscode.ExtensionContext): void {
         if (action === 'View findings') {
           await vscode.commands.executeCommand('docgrity.findings.focus');
         } else if (action === 'Open report') {
-          await vscode.commands.executeCommand('docgrity.openReport');
+          await vscode.commands.executeCommand('docgrity.openDashboard');
         }
       } catch (err) {
         log.error('Scan failed', err);
@@ -84,6 +85,30 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand('docgrity.clearFindings', () => store.clear()),
+
+    vscode.commands.registerCommand('docgrity.openDashboard', () => {
+      const name = vscode.workspace.workspaceFolders?.[0]?.name ?? 'workspace';
+      const panel = vscode.window.createWebviewPanel(
+        'docgrityDashboard',
+        'Docgrity report',
+        vscode.ViewColumn.One,
+        { enableScripts: true, localResourceRoots: [] }
+      );
+      panel.webview.html = buildHtmlReport(store.all(), name, panel.webview);
+      panel.webview.onDidReceiveMessage(
+        (msg: { type?: string; path?: string; excerpt?: string }) => {
+          if (msg?.type === 'open' && typeof msg.path === 'string') {
+            void vscode.commands.executeCommand('docgrity.openEvidence', msg.path, msg.excerpt ?? '');
+          }
+        },
+        undefined,
+        context.subscriptions
+      );
+      const sub = store.onDidChange(() => {
+        panel.webview.html = buildHtmlReport(store.all(), name, panel.webview);
+      });
+      panel.onDidDispose(() => sub.dispose(), undefined, context.subscriptions);
+    }),
 
     vscode.commands.registerCommand('docgrity.openReport', async () => {
       const name = vscode.workspace.workspaceFolders?.[0]?.name ?? 'workspace';
