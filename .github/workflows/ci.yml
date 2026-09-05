@@ -23,8 +23,15 @@ jobs:
         run: npm run compile
       - name: Unit tests
         run: npm test
+      - name: Action unit tests (zero-dependency, node:test)
+        working-directory: action
+        run: npm test
       - name: Dependency vulnerability audit
         run: npm audit --audit-level=high
+      - name: Secret pattern scan (source only)
+        run: |
+          ! grep -rInE "(sk-[A-Za-z0-9]{20,}|AIza[A-Za-z0-9_-]{30,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})" src/ action/src/ action/bin/ \
+            && echo "No hardcoded credentials found."
       - name: Package extension
         run: npx --yes @vscode/vsce package --no-dependencies
       - name: Upload .vsix artifact
@@ -32,3 +39,16 @@ jobs:
         with:
           name: docgrity-vsix
           path: '*.vsix'
+
+  codeql:
+    name: CodeQL analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3

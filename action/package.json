@@ -6,7 +6,8 @@
   "bin": { "docgrity": "bin/docgrity.js" },
   "engines": { "node": ">=20" },
   "scripts": {
-    "scan": "node bin/docgrity.js scan"
+    "scan": "node bin/docgrity.js scan",
+    "test": "node --test \"test/*.test.mjs\""
   },
   "license": "UNLICENSED",
   "private": true

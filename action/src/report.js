@@ -56,7 +56,7 @@ export function renderReport({ findings, stats, repoSlug, branch }) {
       if (items.length === 0) return '';
       return `
   <section>
-    <h2>${esc(label)} <span class="count">${items.length}</span></h2>
+    <h2>${icon(type)} ${esc(label)} <span class="count">${items.length}</span></h2>
     ${items.map((f) => findingCard(f, docUrl)).join('\n')}
   </section>`;
     })
@@ -69,44 +69,70 @@ export function renderReport({ findings, stats, repoSlug, branch }) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Docgrity report</title>
 <style>
-  :root { --blue:#1558bc; --teal:#16a394; --muted:#5b6470; --bg:#f7f9fc; --card:#fff; --border:#e3e8ef;
-          --crit:#c62828; --high:#e65100; --med:#a07d00; --low:#5b6470; }
+  :root { --blue:#1558bc; --blue-dark:#0d3d8a; --teal:#16a394; --muted:#5b6470; --bg:#f4f6fa; --card:#fff; --border:#e3e8ef;
+          --crit:#c62828; --high:#e65100; --med:#a07d00; --low:#5b6470;
+          --good:#1d7a3e; --good-bg:#e8f6ed; --warn-bg:#fdecea; --dup-bg:#fff4e0; --oq-bg:#eef3fd; }
   * { box-sizing: border-box; }
   body { margin:0; font:15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
          background:var(--bg); color:#1a2230; }
-  .wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
-  h1 { font-size: 1.6rem; margin: 0 0 4px; } h1 span { color: var(--blue); }
-  .meta { color: var(--muted); font-size: .88rem; margin-bottom: 24px; }
-  .totals { display:flex; gap:12px; margin: 18px 0 8px; flex-wrap: wrap; }
-  .total { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 18px; }
-  .total b { font-size:1.3rem; display:block; color:var(--blue); }
-  h2 { font-size: 1.15rem; margin: 30px 0 12px; } .count { color:var(--muted); font-weight:400; }
-  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px 60px; }
+  .hero { background:linear-gradient(120deg, var(--blue-dark), var(--blue) 60%, var(--teal)); color:#fff;
+          margin: 0 -20px; padding: 30px 28px 26px; }
+  .hero h1 { font-size: 1.5rem; margin: 0 0 4px; font-weight: 700; }
+  .hero .meta { color: rgba(255,255,255,.85); font-size: .87rem; }
+  .ic { display:inline-flex; width:20px; height:20px; vertical-align:-4px; }
+  .ic svg { width:100%; height:100%; }
+  .stats { display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:14px; margin: -22px 0 26px; }
+  .stat { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;
+          box-shadow: 0 2px 8px rgba(16,30,54,.06); display:flex; align-items:flex-start; justify-content:space-between; }
+  .stat .label { color:var(--muted); font-size:.82rem; font-weight:600; }
+  .stat .num { font-size:1.75rem; font-weight:800; line-height:1.15; }
+  .stat .sub { color:var(--muted); font-size:.76rem; }
+  .badge { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex:none; }
+  .badge .ic { width:22px; height:22px; }
+  .badge.findings { background:#e7eefb; color:var(--blue); }
+  .badge.duplicate { background:var(--dup-bg); color:var(--high); }
+  .badge.contradiction { background:var(--warn-bg); color:var(--crit); }
+  .badge.open_question { background:var(--oq-bg); color:var(--blue); }
+  .badge.ok { background:var(--good-bg); color:var(--good); }
+  h2 { font-size: 1.12rem; margin: 32px 0 12px; display:flex; align-items:center; gap:8px; }
+  h2 .ic { color:var(--muted); }
+  .count { background:#e7eefb; color:var(--blue); font-size:.78rem; font-weight:700; border-radius:999px; padding:1px 10px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:14px;
+          box-shadow: 0 1px 4px rgba(16,30,54,.05); }
   .sev { display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.04em; padding:2px 8px;
          border-radius:999px; color:#fff; vertical-align: middle; margin-right:8px; }
   .sev.CRITICAL{background:var(--crit)} .sev.HIGH{background:var(--high)} .sev.MEDIUM{background:var(--med)} .sev.LOW{background:var(--low)}
   .conf { color:var(--muted); font-size:.82rem; }
-  .summary { margin: 8px 0 10px; }
-  .files a, .files span { font-family: ui-monospace, monospace; font-size:.85rem; color:var(--blue); }
+  .summary { margin: 8px 0 10px; font-weight:600; }
+  .files { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .files .ic { width:16px; height:16px; color:var(--muted); }
+  .files a, .files span.f { font-family: ui-monospace, monospace; font-size:.85rem; color:var(--blue); }
   blockquote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--teal); background:#f0faf8;
                font-size:.88rem; border-radius: 0 8px 8px 0; }
   blockquote .src { display:block; color:var(--muted); font-size:.78rem; font-family: ui-monospace, monospace; margin-top:4px; }
-  .owners { font-size:.85rem; color:var(--muted); margin-top:8px; }
+  .owners { font-size:.85rem; color:var(--muted); margin-top:8px; display:flex; align-items:center; gap:6px; }
+  .owners .ic { width:16px; height:16px; }
   .owners b { color:#1a2230; font-weight:600; }
   .fine { color:var(--muted); font-size:.75rem; margin-top:6px; }
+  .empty { background:var(--good-bg); border:1px solid #cdebd8; color:var(--good); border-radius:12px;
+           padding:18px 20px; display:flex; align-items:center; gap:10px; font-weight:600; }
   footer { margin-top:40px; color:var(--muted); font-size:.8rem; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1><span>Docgrity</span> documentation-integrity report</h1>
-  <div class="meta">${esc(repoSlug ?? 'local scan')} · scanned ${esc(stats.scannedAt)} · ${stats.docs} markdown docs · ${stats.pairs} pairs assessed</div>
-  <div class="totals">
-    ${Object.entries(TYPE_LABELS)
-      .map(([t, l]) => `<div class="total"><b>${counts[t] ?? 0}</b>${esc(l)}</div>`)
-      .join('')}
+  <div class="hero">
+    <h1>Docgrity — documentation-integrity report</h1>
+    <div class="meta">${esc(repoSlug ?? 'local scan')} · scanned ${esc(stats.scannedAt)} · ${stats.docs} markdown docs · ${stats.pairs} pairs assessed</div>
   </div>
-  ${findings.length === 0 ? '<p>No findings — your docs agree with themselves. 🎉</p>' : sections}
+  <div class="stats">
+    <div class="stat"><div><div class="label">Open findings</div><div class="num">${findings.length}</div><div class="sub">${stats.docs} docs scanned</div></div><div class="badge ${findings.length ? 'findings' : 'ok'}">${icon(findings.length ? 'findings' : 'check')}</div></div>
+    <div class="stat"><div><div class="label">Duplicates</div><div class="num">${counts.duplicate ?? 0}</div><div class="sub">overlapping docs</div></div><div class="badge duplicate">${icon('duplicate')}</div></div>
+    <div class="stat"><div><div class="label">Contradictions</div><div class="num">${counts.contradiction ?? 0}</div><div class="sub">conflicting claims</div></div><div class="badge contradiction">${icon('contradiction')}</div></div>
+    <div class="stat"><div><div class="label">Open questions</div><div class="num">${counts.open_question ?? 0}</div><div class="sub">unresolved decisions</div></div><div class="badge open_question">${icon('open_question')}</div></div>
+  </div>
+  ${findings.length === 0 ? `<div class="empty">${icon('check')} No findings — your docs agree with themselves.</div>` : sections}
   <footer>Read-only report. Ownership is inferred from git history and is always <em>potential</em>, never asserted.
   Generated by Docgrity.</footer>
 </div>
@@ -117,7 +143,7 @@ export function renderReport({ findings, stats, repoSlug, branch }) {
     const fileLinks = f.files
       .map((p) => {
         const url = docUrlFn(p);
-        return url ? `<a href="${esc(url)}" rel="noopener">${esc(p)}</a>` : `<span>${esc(p)}</span>`;
+        return url ? `<a href="${esc(url)}" rel="noopener">${esc(p)}</a>` : `<span class="f">${esc(p)}</span>`;
       })
       .join(' · ');
     const claims = Array.isArray(f.detail?.conflicting_claims)
@@ -127,12 +153,12 @@ export function renderReport({ findings, stats, repoSlug, branch }) {
       <span class="sev ${esc(f.severity)}">${esc(f.severity)}</span>
       <span class="conf">confidence ${(f.confidence * 100).toFixed(0)}%${f.issueUrl ? ` · <a href="${esc(f.issueUrl)}" rel="noopener">issue</a>` : ''}</span>
       <div class="summary">${esc(f.summary)}</div>
-      <div class="files">${fileLinks}</div>
+      <div class="files">${icon('docs')} ${fileLinks}</div>
       ${claims}
       ${f.evidence
         .map((e) => `<blockquote>${esc(e.excerpt)}<span class="src">${esc(e.sourceLabel)}</span></blockquote>`)
         .join('')}
-      <div class="owners">Potential owner(s): <b>${esc(f.potentialOwners.join(', ') || 'unknown')}</b></div>
+      <div class="owners">${icon('owner')} Potential owner(s): <b>${esc(f.potentialOwners.join(', ') || 'unknown')}</b></div>
       <div class="fine">fingerprint ${esc(f.fingerprint)} · model ${esc(f.model)} · prompt ${esc(f.promptVersion)}</div>
     </div>`;
   }
