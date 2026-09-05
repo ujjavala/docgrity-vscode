@@ -111,8 +111,8 @@
         },
         "docgrity.exclude": {
           "type": "string",
-          "default": "**/{node_modules,dist,out,build,.git,vendor}/**",
-          "description": "Glob for paths to exclude from scans."
+          "default": "",
+          "description": "Additional glob for paths to exclude from scans. node_modules, dist, build, vendor etc. and anything in .gitignore are always excluded."
         },
         "docgrity.maxFiles": {
           "type": "number",
