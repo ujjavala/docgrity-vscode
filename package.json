@@ -62,13 +62,44 @@
       "view/item/context": [
         {
           "command": "docgrity.raiseIssue",
-          "when": "view == docgrity.findings && viewItem == finding"
+          "when": "view == docgrity.findings && viewItem == finding && docgrity.issuesEnabled"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "docgrity.raiseIssue",
+          "when": "docgrity.issuesEnabled"
         }
       ]
     },
     "configuration": {
       "title": "Docgrity",
       "properties": {
+        "docgrity.mode": {
+          "type": "string",
+          "enum": ["report-only", "report-and-issue"],
+          "enumDescriptions": [
+            "Scan and show findings in the editor only. The 'Raise GitHub issue' action is hidden — nothing can be posted anywhere.",
+            "Scan, show findings, and allow raising GitHub issues (each one previewed and human-approved before posting)."
+          ],
+          "default": "report-and-issue",
+          "description": "What Docgrity is allowed to do. 'report-only' guarantees the extension never posts anything."
+        },
+        "docgrity.checks.duplicates": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check document pairs for duplicates (docs that should be merged)."
+        },
+        "docgrity.checks.contradictions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check document pairs for contradictions (conflicting factual claims)."
+        },
+        "docgrity.checks.openQuestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check each document for unresolved open questions (TBDs, TODOs, unanswered questions)."
+        },
         "docgrity.include": {
           "type": "string",
           "default": "**/*.md",

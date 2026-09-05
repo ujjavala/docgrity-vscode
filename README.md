@@ -43,6 +43,46 @@ See [action/README.md](action/README.md) for Action and CLI usage
 - Issue creation uses VS Code's built-in GitHub sign-in.
 - Candidate selection is local TF-IDF — the LLM only sees the top pairs.
 
+## Modes: report-only vs report + issues
+
+| `docgrity.mode` | Behaviour |
+|---|---|
+| `report-and-issue` (default) | Scan, review findings, and raise GitHub issues — each previewed and human-approved. |
+| `report-only` | Scan and review only. The *Raise GitHub issue* action is hidden and blocked — the extension is guaranteed to never post anywhere. Good for client repos, compliance-sensitive environments, or just reading. |
+
+Set it in Settings → search “docgrity mode”, or in `.vscode/settings.json`:
+
+```json
+{ "docgrity.mode": "report-only" }
+```
+
+Per-workspace settings win over user settings, so you can default to report-only
+globally and enable issues only in repos you own.
+
+## Choosing which checks run
+
+Each check is a separate toggle — run any combination:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `docgrity.checks.duplicates` | `true` | Pairwise duplicate detection |
+| `docgrity.checks.contradictions` | `true` | Pairwise contradiction detection |
+| `docgrity.checks.openQuestions` | `true` | Per-doc unresolved-question detection |
+
+These combine freely with any model (`docgrity.model.*`) and either mode
+(`docgrity.mode`). Disabling checks also speeds up scans: pair selection is
+skipped entirely when both pairwise checks are off.
+
+## Scan performance
+
+- When both pairwise checks are enabled they run as a **single combined LLM
+  call per pair** (the model reads each pair once, not twice).
+- Docs with no open-question signals (no TODO/TBD/`???`/unanswered questions)
+  are **pre-filtered out** before any LLM call.
+- Assessments run with **bounded concurrency** (4 at a time).
+- For large repos, tune `docgrity.maxFiles`, `docgrity.maxPairs`, and
+  `docgrity.include` to narrow the corpus.
+
 ## Choosing your model (Copilot, Claude, GPT, local llama…)
 
 Run **`Docgrity: Select AI model`** from the command palette — it lists every model

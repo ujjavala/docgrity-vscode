@@ -7,6 +7,13 @@ import { raiseIssue } from './github/issues';
 import { selectModelCommand } from './agents/selectModel';
 import { initLog, log } from './log';
 
+function issuesEnabled(): boolean {
+  return (
+    vscode.workspace.getConfiguration('docgrity').get<string>('mode', 'report-and-issue') !==
+    'report-only'
+  );
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   initLog(context);
   log.info(`Docgrity activated (v${context.extension.packageJSON.version})`);
@@ -14,6 +21,19 @@ export function activate(context: vscode.ExtensionContext): void {
   const tree = new FindingsTree(store);
   context.subscriptions.push(vscode.window.createTreeView('docgrity.findings', { treeDataProvider: tree }));
   registerDiagnostics(context, store);
+
+  // Mode gating: in report-only mode the raise-issue surface is hidden entirely.
+  const syncMode = () => {
+    const enabled = issuesEnabled();
+    void vscode.commands.executeCommand('setContext', 'docgrity.issuesEnabled', enabled);
+    log.info(`Mode: ${enabled ? 'report-and-issue' : 'report-only'}`);
+  };
+  syncMode();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('docgrity.mode')) syncMode();
+    })
+  );
 
   context.subscriptions.push(
     vscode.commands.registerCommand('docgrity.scan', async () => {
@@ -37,6 +57,14 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand('docgrity.raiseIssue', async (node?: { finding?: Finding }) => {
+      // Defense in depth: the menu is hidden in report-only mode, but the
+      // command could still be invoked programmatically.
+      if (!issuesEnabled()) {
+        void vscode.window.showInformationMessage(
+          'Docgrity is in report-only mode (docgrity.mode). Switch to "report-and-issue" to raise GitHub issues.'
+        );
+        return;
+      }
       const finding = node?.finding ?? (await pickFinding(store));
       if (!finding) return;
       try {

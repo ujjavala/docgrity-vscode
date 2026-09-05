@@ -76,19 +76,55 @@ function pairPrompt(a: Doc, b: Doc): string {
   return `PAGE A — "${a.relPath}":\n${a.text.slice(0, 8000)}\n\n---\n\nPAGE B — "${b.relPath}":\n${b.text.slice(0, 8000)}`;
 }
 
+function validateDuplicate(o: any) {
+  return {
+    is_duplicate: Boolean(o.is_duplicate),
+    confidence: num(o.confidence),
+    summary: str(o.summary).slice(0, 2000),
+    recommended_action: str(o.recommended_action || 'REVIEW'),
+    evidence: validateEvidence(o.evidence),
+  };
+}
+
+function validateContradiction(o: any) {
+  return {
+    is_contradiction: Boolean(o.is_contradiction),
+    confidence: num(o.confidence),
+    severity: SEVERITIES.has(o.severity) ? (o.severity as string) : 'MEDIUM',
+    summary: str(o.summary).slice(0, 2000),
+    conflicting_claims: (Array.isArray(o.conflicting_claims) ? o.conflicting_claims : []).map(
+      (c: unknown) => str(c).slice(0, 500)
+    ),
+    evidence: validateEvidence(o.evidence),
+  };
+}
+
+/**
+ * Combined duplicate + contradiction assessment in a single LLM call — the
+ * model reads the same two documents once instead of twice, halving pair
+ * latency and token cost with the same rules and output contracts.
+ */
+export async function assessPair(a: Doc, b: Doc, token: vscode.CancellationToken) {
+  const p = PROMPTS.pair;
+  const { output, model } = await completeJson({
+    system: p.system,
+    prompt: pairPrompt(a, b),
+    token,
+    validate: (o) => ({
+      duplicate: validateDuplicate(o.duplicate ?? {}),
+      contradiction: validateContradiction(o.contradiction ?? {}),
+    }),
+  });
+  return { output, model, promptVersion: p.version };
+}
+
 export async function assessDuplicate(a: Doc, b: Doc, token: vscode.CancellationToken) {
   const p = PROMPTS.duplicate;
   const { output, model } = await completeJson({
     system: p.system,
     prompt: pairPrompt(a, b),
     token,
-    validate: (o) => ({
-      is_duplicate: Boolean(o.is_duplicate),
-      confidence: num(o.confidence),
-      summary: str(o.summary).slice(0, 2000),
-      recommended_action: str(o.recommended_action || 'REVIEW'),
-      evidence: validateEvidence(o.evidence),
-    }),
+    validate: validateDuplicate,
   });
   return { output, model, promptVersion: p.version };
 }
@@ -99,16 +135,7 @@ export async function assessContradiction(a: Doc, b: Doc, token: vscode.Cancella
     system: p.system,
     prompt: pairPrompt(a, b),
     token,
-    validate: (o) => ({
-      is_contradiction: Boolean(o.is_contradiction),
-      confidence: num(o.confidence),
-      severity: SEVERITIES.has(o.severity) ? (o.severity as string) : 'MEDIUM',
-      summary: str(o.summary).slice(0, 2000),
-      conflicting_claims: (Array.isArray(o.conflicting_claims) ? o.conflicting_claims : []).map(
-        (c: unknown) => str(c).slice(0, 500)
-      ),
-      evidence: validateEvidence(o.evidence),
-    }),
+    validate: validateContradiction,
   });
   return { output, model, promptVersion: p.version };
 }
