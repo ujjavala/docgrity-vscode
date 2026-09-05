@@ -95,7 +95,9 @@ VS Code exposes and saves your choice. Or set it manually:
 
 **Options, in order of simplicity:**
 
-1. **Copilot (default)** — sign in to GitHub Copilot; nothing to configure.
+1. **Copilot (default)** — sign in to GitHub Copilot; nothing to configure. Copilot
+   models come via the `vscode.lm` API and are **unaffected by GitHub's retirement of
+   the separate GitHub Models service**.
 2. **Claude / GPT / Gemini via Copilot** — any model enabled in Copilot's model picker
    is available; set `docgrity.model.family` (e.g. `claude-sonnet-4.5`) or use
    *Select AI model*.
@@ -118,6 +120,10 @@ VS Code exposes and saves your choice. Or set it manually:
 Small local models fail Docgrity's strict-JSON validation more often than hosted
 ones; failed responses are rejected safely (never mis-recorded) — expect fewer
 findings rather than wrong ones. 8B+ instruct models work best.
+
+**Outside the editor** (the [CLI and GitHub Action](action/README.md)) Copilot is not
+available — there is no Copilot API for terminals or CI. Use `ollama` (keyless) or
+bring your own `anthropic` / `openai` / `gemini` key instead.
 
 ## Design principles (shared with the Forge app)
 

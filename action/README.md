@@ -17,12 +17,19 @@ Part of the Docgrity family:
 ```yaml
 - uses: ujjavala/docgrity-vscode/action@main
   env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # for issue creation
   with:
-    provider: github-models   # free — uses GITHUB_TOKEN, no API key
+    provider: anthropic       # or openai / gemini / ollama
+    api_key: ${{ secrets.DOCGRITY_API_KEY }}
     create_issues: 'true'     # opt-in; default false
     max_new_issues: 5
 ```
+
+> **Note:** GitHub Models (`provider: github-models`) is being retired by GitHub —
+> runs may fail with HTTP 410 (`github_models_retirement`). Use a BYO-key provider
+> (`anthropic` / `openai` / `gemini`) or `ollama` instead. Copilot models are **not**
+> available here: Copilot has no API outside the editor — only the VS Code extension
+> can use it.
 
 Full example with weekly schedule, PR trigger and Pages report publishing:
 [examples/docgrity.yml](examples/docgrity.yml).
@@ -43,9 +50,9 @@ What it does per run:
 
 | provider | key | cost |
 |---|---|---|
-| `github-models` (default in CI) | none — uses `GITHUB_TOKEN` with `models: read` | free (being retired by GitHub — prefer a BYO provider) |
-| `gemini` / `openai` / `anthropic` | `api_key` input (use a repo secret) | your key |
-| `ollama` | none — local or tunnelled endpoint | free, fully private |
+| `anthropic` / `openai` / `gemini` | `api_key` input (use a repo secret) — defaults: `claude-3-5-haiku-latest`, `gpt-4o-mini`, `gemini-flash` | your key |
+| `ollama` (CLI default) | none — local or tunnelled endpoint | free, fully private |
+| `github-models` | none — uses `GITHUB_TOKEN` with `models: read` | **being retired by GitHub** (HTTP 410) — switch to a provider above |
 
 ## Local CLI (read-only)
 
@@ -82,7 +89,8 @@ Usage: docgrity scan [options]
 ```
 
 Provider auto-detection: `DOCGRITY_API_KEY` set → `gemini`; else `GITHUB_TOKEN` →
-`github-models`; else → `ollama` (local, fully private — nothing leaves your machine).
+`github-models` (retiring — pass `--provider` explicitly); else → `ollama` (local,
+fully private — nothing leaves your machine).
 
 Examples:
 
