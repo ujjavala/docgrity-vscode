@@ -40,15 +40,6 @@ jobs:
           name: docgrity-vsix
           path: '*.vsix'
 
-  codeql:
-    name: CodeQL analysis
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-      - uses: github/codeql-action/analyze@v3
+  # NOTE: CodeQL code scanning requires a public repo or GitHub Advanced Security.
+  # If this repo is ever made public, restore a codeql job with
+  # `security-events: write` and github/codeql-action init + analyze.
